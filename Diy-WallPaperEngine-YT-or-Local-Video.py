@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
+#from networkx import center
+from numpy import place
 import vlc
 import threading
 import time
@@ -75,7 +77,7 @@ def get_youtube_url(url):
         print(f"Chyba pri získavaní URL: {e}")
         return None
 
-# === Spustenie videa ako tapeta ===
+# === Spustenie videa ako tapeta s loop ===
 def start_wallpaper():
     global player, instance, is_playing, WORKERW
 
@@ -101,14 +103,12 @@ def start_wallpaper():
         if not path:
             messagebox.showwarning("Chyba", "Zadajte cestu k lokálnemu .mp4 súboru!")
             return
-        # Skús nájsť súbor
         if not os.path.isfile(path):
-            # Skús relatívne k aktuálnej pozícii .py súboru
             abs_path = os.path.join(os.getcwd(), path)
             if os.path.isfile(abs_path):
                 path = abs_path
             else:
-                messagebox.showerror("Chyba", f"Súbor {path} neexistuje\n\nZadajte platnú cestu / súbor")
+                messagebox.showerror("Chyba", f"Súbor {path} neexistuje.")
                 return
         media_source = path
     else:
@@ -119,24 +119,45 @@ def start_wallpaper():
         messagebox.showerror("Chyba", "Nepodarilo sa nájsť plochu (WorkerW).")
         return
 
-    instance = vlc.Instance("--no-xlib", "--video-wallpaper", "--loop")
+    instance = vlc.Instance("--no-xlib", "--video-wallpaper")  # -1 = loop donekonečna
     player = instance.media_player_new()
     media = instance.media_new(media_source)
     player.set_media(media)
     player.set_hwnd(WORKERW)
 
-    def play():
+    def play_loop():
         global is_playing
         is_playing = True
         player.play()
         while is_playing:
-            time.sleep(0.1)
+            # Ak je stav videa Ended alebo Stopped, spusti ho znova
+            state = player.get_state()
+            if state in [vlc.State.Ended, vlc.State.Stopped, vlc.State.Error]:
+                player.stop()
+                player.play()
+            time.sleep(0.2)
 
-    threading.Thread(target=play, daemon=True).start()
+    threading.Thread(target=play_loop, daemon=True).start()
 
     btn_start.config(state="disabled")
     btn_stop.config(state="normal")
     label_status.config(text="✅ Prehráva sa na tapete")
+
+
+# === Zastavenie videa ===
+def stop_wallpaper():
+    global is_playing, player, instance
+    is_playing = False
+    if player:
+        player.stop()
+        player.release()
+        player = None
+    if instance:
+        instance.release()
+        instance = None
+    btn_start.config(state="normal")
+    btn_stop.config(state="disabled")
+    label_status.config(text="⏹️ Zastavené")
 
 # === Zastavenie videa ===
 def stop_wallpaper():
@@ -200,9 +221,9 @@ def set_semitransparent_background():
     return canvas
 
 # === GUI ===
-# === GUI ===
 root = tk.Tk()
-root.title("DIY Wallpaper Engine")
+#root.iconbitmap("NIGA-CORP.ico")
+root.title("Wallpaper Engine")
 root.geometry("600x450+640+150")
 root.maxsize(800, 550)
 root.minsize(600, 450)
@@ -211,7 +232,7 @@ root.minsize(600, 450)
 canvas = set_semitransparent_background()
 
 # Nadpis
-title_label = tk.Label(root, text="DIY Wallpaper Engine", font=("Arial", 16, "bold"), fg="white", bg="#000000")
+title_label = tk.Label(root, text="DIY Wallpaper Engine - Free Chinesse 'The Rock' Version", font=("Arial", 16, "bold"), fg="black", bg="#FFFFFF")
 title_label.place(relx=0.5, y=30, anchor="center")
 
 # === Premenná pre výber zdroja ===
@@ -220,12 +241,6 @@ source_var = tk.StringVar(value="youtube")  # default
 # === YouTube URL vstup s checkboxom ===
 frame_youtube = tk.Frame(root, bg="#000000", bd=1)
 frame_youtube.place(relx=0.5, y=120, anchor="center", width=500, height=60)
-
-
-
-
-
-
 
 # Radiobutton priamo v rámčeku YouTube
 radio_youtube = tk.Radiobutton(frame_youtube, variable=source_var, value="youtube",
@@ -246,15 +261,24 @@ radio_local = tk.Radiobutton(frame_local, variable=source_var, value="local",
                              bg="#000000", selectcolor="#EB0000", activebackground="#000000", fg="white")
 radio_local.place(x=10, y=22)
 
-
-
-
-
-
-tk.Label(frame_local, text="Lokálne .mp4:", fg="white", bg="#000000", font=("Arial", 10)).place(x=30, y=5)
+tk.Label(frame_local, text="Local (.mp4):", fg="white", bg="#000000", font=("Arial", 10)).place(x=30, y=5)
 entry_local = tk.Entry(frame_local, font=("Arial", 10), bd=0, highlightthickness=1, highlightbackground="#555")
 entry_local.place(x=30, y=25, relwidth=0.90)
 entry_local.insert(0, "C:/Path/To/Your/Video.mp4")
+
+def select_local_file():
+    path = filedialog.askopenfilename(
+        title="Vyberte .mp4 súbor",
+        filetypes=[("MP4 files", "*.mp4")]
+    )
+    if path:
+        entry_local.delete(0, tk.END)
+        entry_local.insert(0, path)
+
+btn_select_file = tk.Button(frame_local, text="Select .mp4 to play", command=select_local_file,
+                            bg="#FFA500", fg="white", width=14)
+btn_select_file.place(x=200)
+
 
 # Funkcia na aktualizáciu stavu polí podľa výberu
 def update_entries():
@@ -284,11 +308,11 @@ label_status = tk.Label(root, text="⏹️ Zastavené", font=("Arial", 10), fg="
 label_status.place(relx=0.5, y=330, anchor="center")
 
 # Minimalizovať
-btn_minimize = tk.Button(root, text="🗕 Minimalizovať", command=minimize_to_tray, bg="#2196F3", fg="white", width=15)
+btn_minimize = tk.Button(root, text="🗕 Minimize", command=minimize_to_tray, bg="#2196F3", fg="white", width=15)
 btn_minimize.place(relx=0.5, y=370, anchor="center")
 
 # Tip
-tip_label = tk.Label(root, text="💡 Tip: Skúste loop videá (napr. 'rain loop 4K')", fg="gray", bg="#000000", font=("Arial", 9))
+tip_label = tk.Label(root, text="💡 Tip: Try loop videos (example. 'rain loop 4K')", fg="gray", bg="#000000", font=("Arial", 9))
 tip_label.place(relx=0.5, y=410, anchor="center")
 
 # Protokol
