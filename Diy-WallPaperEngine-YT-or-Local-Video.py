@@ -1,10 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-import vlc
-import threading
-import time
-import sys
-import os
+from urllib import response
+from time import sleep
+import vlc,threading, time, sys, os
 
 try:
     import pafy
@@ -125,7 +123,7 @@ def start_wallpaper():
         messagebox.showerror("Chyba", "Nepodarilo sa nájsť plochu (WorkerW).")
         return
 
-    instance = vlc.Instance("--no-xlib") # -1 = loop donekonečna
+    instance = vlc.Instance("--no-xlib", "--video-on-top")
     player = instance.media_player_new()
     media = instance.media_new(media_source)
     player.set_media(media)
@@ -148,7 +146,6 @@ def start_wallpaper():
     btn_start.config(state="disabled")
     btn_stop.config(state="normal")
     label_status.config(text="✅ Prehráva sa na tapete")
-
 
 # === Zastavenie videa ===
 def stop_wallpaper():
@@ -223,16 +220,41 @@ def set_semitransparent_background():
 
     root.bind("<Configure>", resize_image)
     root.after(100, resize_image)  # prvá aktualizácia
-
     return canvas
+
+
+def DownloadAndSetGitHubIMG(root):
+    import requests
+    folder = r"C:\WallPaperEngineFolder" 
+    IMG_url = "https://raw.githubusercontent.com/Fattcat/DIY-WallPaperEngine/main/The-RockFace.jpg"
+    file_path = os.path.join(folder, "The-RockFace.jpg")
+    os.makedirs(folder, exist_ok=True)
+
+    IMG_Response = requests.get(IMG_url)
+    if IMG_Response.status_code == 200:
+        with open(file_path, "wb") as f:
+            f.write(IMG_Response.content)
+            print("IMG downloaded")
+    else:
+        print("error while downloading IMG from github repo")
+        return
+
+    # Vytvorenie icon.ico z The-RockFace.jpg
+    img = Image.open(file_path)
+    ico_path = os.path.join(folder, "icon.ico")
+    img.save(ico_path, format='ICO', sizes=[(256,256)])
+    root.iconbitmap(ico_path)
 
 # === GUI ===
 root = tk.Tk()
+
+DownloadAndSetGitHubIMG(root)
 #root.iconbitmap("NIGA-CORP.ico")
 root.title("Wallpaper Engine")
-root.geometry("600x450+640+150")
-root.maxsize(800, 550)
+root.geometry("600x450+640+250")
 root.minsize(600, 450)
+root.resizable(0,0)
+#root.maxsize(800, 550)
 
 # Nastav priehľadné pozadie
 canvas = set_semitransparent_background()
