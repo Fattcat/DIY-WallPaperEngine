@@ -1,13 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-#from numpy import place
 import vlc
 import threading
 import time
 import sys
 import os
 
-# === Závislosti ===
 try:
     import pafy
     USE_YT_DLP = False
