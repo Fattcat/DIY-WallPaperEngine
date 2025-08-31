@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-#from networkx import center
-from numpy import place
+#from numpy import place
 import vlc
 import threading
 import time
@@ -57,25 +56,34 @@ def get_workerw():
     win32gui.EnumWindows(enum_callback, workerws)
     return workerws[0] if workerws else None
 
-# === Získaj priamu URL z YouTube ===
+# === Získaj priamu URL z YouTube vo vysokej kvalite ===
 def get_youtube_url(url):
     try:
         if USE_YT_DLP:
             ydl_opts = {
-                'format': 'best[ext=mp4]/best',
+                'format': 'bestvideo/best',  # max kvalita
                 'quiet': True,
                 'noplaylist': True,
+                'merge_output_format': 'mp4'
             }
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                return info['url']
+                # ak je kombinovaný stream (video+audio)
+                if 'url' in info:
+                    return info['url']
+                # ak sú oddelené, vezmi video
+                elif 'formats' in info:
+                    best_format = max(info['formats'], key=lambda f: f.get('height', 0))
+                    return best_format['url']
         else:
+            # PAFY verzia – nepoužívaj preftype="mp4"
             video = pafy.new(url)
-            best = video.getbest(preftype="mp4")
+            best = video.getbest()  # ponechaj originál
             return best.url
     except Exception as e:
         print(f"Chyba pri získavaní URL: {e}")
         return None
+
 
 # === Spustenie videa ako tapeta s loop ===
 def start_wallpaper():
@@ -119,7 +127,7 @@ def start_wallpaper():
         messagebox.showerror("Chyba", "Nepodarilo sa nájsť plochu (WorkerW).")
         return
 
-    instance = vlc.Instance("--no-xlib", "--video-wallpaper")  # -1 = loop donekonečna
+    instance = vlc.Instance("--no-xlib") # -1 = loop donekonečna
     player = instance.media_player_new()
     media = instance.media_new(media_source)
     player.set_media(media)
@@ -250,7 +258,7 @@ radio_youtube.place(x=10, y=22)
 tk.Label(frame_youtube, text="YouTube URL:", fg="white", bg="#000000", font=("Arial", 10)).place(x=30, y=5)
 entry_youtube = tk.Entry(frame_youtube, font=("Arial", 10), bd=0, highlightthickness=1, highlightbackground="#555")
 entry_youtube.place(x=30, y=25, relwidth=0.90)
-entry_youtube.insert(0, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+entry_youtube.insert(0, "https://www.youtube.com/watch?v=eCHaiEjCDFM&t=1358s")
 
 # === Lokálne video vstup s checkboxom ===
 frame_local = tk.Frame(root, bg="#000000", bd=1)
