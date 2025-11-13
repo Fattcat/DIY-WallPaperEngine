@@ -189,7 +189,7 @@ def set_semitransparent_background():
     global background_image
 
     try:
-        img = Image.open("The-RockFace.jpg").convert("RGBA")  # Otvor ako RGBA
+        img = Image.open("C:\WallPaperEngineFolder\The-RockFace.jpg").convert("RGBA")  # Otvor ako RGBA
     except FileNotFoundError:
         messagebox.showwarning("Upozornenie", "Súbor 'The-RockFace.jpg' nebol nájdený.")
         return None
@@ -226,7 +226,8 @@ def set_semitransparent_background():
 def DownloadAndSetGitHubIMG(root):
     import requests
     folder = r"C:\WallPaperEngineFolder" 
-    IMG_url = "https://raw.githubusercontent.com/Fattcat/DIY-WallPaperEngine/main/The-RockFace.jpg"
+    #IMG_url = "https://raw.githubusercontent.com/Fattcat/DIY-WallPaperEngine/main/The-RockFace.jpg"
+    IMG_url = "https://i.redd.it/3w8hx26xcw1a1.jpg"
     file_path = os.path.join(folder, "The-RockFace.jpg")
     os.makedirs(folder, exist_ok=True)
 
