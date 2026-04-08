@@ -33,7 +33,8 @@ player = None
 instance = None
 is_playing = False
 transparency_level = 0.7
-WORKERW = None
+WORKERW = 0x000a02fe # this workwew works on win11,
+# on win10 will work probably WORKERW = None
 background_image = None
 
 # === Nájdi WorkerW (pre tapetu) ===
@@ -118,7 +119,7 @@ def start_wallpaper():
     else:
         return
 
-    WORKERW = get_workerw()
+    WORKERW = 0x000a02fe
     if not WORKERW:
         messagebox.showerror("Chyba", "Nepodarilo sa nájsť plochu (WorkerW).")
         return
