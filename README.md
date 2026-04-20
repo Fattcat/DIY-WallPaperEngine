@@ -1,6 +1,8 @@
 # DIY-WallPaperEngine
 DIY-WallPaperEngine - Free Chinesse ***"The Rock"*** Version App
 
+- for educational purposes only !
+ 
 - A lightweight Python-based wallpaper engine that can play **local MP4 videos** or **YouTube videos** directly on your Windows desktop as a dynamic wallpaper.
 
 ---
